@@ -40,11 +40,11 @@ https://archive.eksworkshop.com/intermediate/290_argocd/install/
 ```
  environment {
     GIT_REPO_NAME = "Tetris-manifest"
-    GIT_USER_NAME = "Aj7Ay"
+    GIT_USER_NAME = "Shaik-DevOpsLucky"
   }
     stage('Checkout Code') {
       steps {
-        git branch: 'main', url: 'https://github.com/Aj7Ay/Tetris-manifest.git'
+        git branch: 'main', url: 'https://github.com/Shaik-DevOpsLucky/devsecops-Tetris-V1.git'
       }
     }
 

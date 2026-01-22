@@ -1,0 +1,96 @@
+pipeline {
+    agent any
+    tools {
+        jdk 'jdk17'
+        terraform 'terraform'
+    }
+    stages {
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+
+        stage('Checkout from Git') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Shaik-DevOpsLucky/devsecops-Tetris-V1.git'
+            }
+        }
+
+        stage('Change to jenkins-CICD directory') {
+            steps {
+                dir('jenkins-CICD') {
+                    echo "Now inside jenkins-CICD directory"
+                }
+            }
+        }
+
+        stage('Terraform Version') {
+            steps {
+                dir('jenkins-CICD') {
+                    sh 'terraform --version'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                dir('jenkins-CICD') {
+                    withSonarQubeEnv('sonar-server') {
+                        sh ''' $SCANNER_HOME/bin/sonar-scanner \
+                        -Dsonar.projectName=Terraform \
+                        -Dsonar.projectKey=Terraform '''
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'Sonar-token'
+                }
+            }
+        }
+
+        stage('TRIVY FS SCAN') {
+            steps {
+                dir('jenkins-CICD') {
+                    sh "trivy fs . > trivyfs.txt"
+                }
+            }
+        }
+
+        stage('Executable Permission to userdata') {
+            steps {
+                dir('jenkins-CICD') {
+                    sh 'chmod 777 website.sh'
+                }
+            }
+        }
+
+        stage('Terraform Init') {
+            steps {
+                dir('jenkins-CICD') {
+                    sh 'terraform init'
+                }
+            }
+        }
+
+        stage('Terraform Plan') {
+            steps {
+                dir('jenkins-CICD') {
+                    sh 'terraform plan'
+                }
+            }
+        }
+
+        stage('Terraform Apply') {
+            steps {
+                dir('jenkins-CICD') {
+                    sh 'terraform ${action} --auto-approve'
+                }
+            }
+        }
+    }
+}
